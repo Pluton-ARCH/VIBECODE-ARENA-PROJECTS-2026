@@ -1,0 +1,76 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ChannelType {
+  URL
+  EMAIL
+  SMS
+  SCREENSHOT
+}
+
+enum IncidentStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  ESCALATED
+  CLOSED
+}
+
+enum IncidentType {
+  EMAIL
+  SMS
+  CALL
+  WEBSITE
+  UPI_QR
+  OTHER
+}
+
+model ScanLog {
+  id            String      @id @default(uuid())
+  channel       ChannelType
+  rawInput      String
+  defangedInput String?
+  score         Int
+  riskLevel     RiskLevel
+  targetBrand   String?
+  indicators    String      // JSON stringified indicators
+  advice        String      // JSON stringified recommendations
+  createdAt     DateTime    @default(now())
+}
+
+model IncidentReport {
+  id               String         @id @default(uuid())
+  trackingCode     String         @unique
+  type             IncidentType
+  description      String
+  date             DateTime       @default(now())
+  suspiciousTarget String         // Defanged URL, phone number, or handle
+  amountLost       Float?
+  evidenceFiles    String?        // JSON stringified local file names/hashes
+  reporterContact  String?        // Masked contact details
+  isAnonymous      Boolean        @default(false)
+  status           IncidentStatus @default(SUBMITTED)
+  timeline         String         // JSON array of timeline steps: [{status, timestamp, note}]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("ANALYST")
+  createdAt    DateTime @default(now())
+}
